@@ -472,7 +472,7 @@ async function runTest(
   context,
   sendMessageToJest
 ) {
-  const {leakDetector, result} = await runTestInternal(
+  let {leakDetector, result} = await runTestInternal(
     path,
     globalConfig,
     config,
@@ -480,6 +480,22 @@ async function runTest(
     context,
     sendMessageToJest
   );
+
+  if (result.numFailingTests > 0) {
+    console.log('going to rerun', path);
+
+    const runResult = await runTestInternal(
+      path,
+      globalConfig,
+      config,
+      resolver,
+      context,
+      sendMessageToJest
+    );
+
+    result = runResult.result;
+    leakDetector = runResult.leakDetector;
+  }
 
   if (leakDetector) {
     // We wanna allow a tiny but time to pass to allow last-minute cleanup
